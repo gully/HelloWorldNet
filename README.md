@@ -8,3 +8,5 @@ The 2018 NASA FDL Exoplanet Team included:
 [Yani Ioannou](https://yani.io/annou/),
 [Hugh Osborn](https://www.hughosborn.co.uk/),
 [Michele Sasdelli](https://uk.linkedin.com/in/michelesasdelli)
+
+There will soon also be a code for downloading the required *Kepler* light curves and generating the input views and labels; for now, you can contact one of the FDL Exoplanet Team members.
