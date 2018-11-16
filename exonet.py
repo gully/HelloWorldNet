@@ -1,4 +1,3 @@
-
 ########################################
 ########### IMPORT PACKAGES ############
 ########################################
@@ -97,7 +96,7 @@ class KeplerDataLoader(Dataset):
         data_global_cen = np.load(self.flist_global_cen[idx])
         data_local_cen = np.load(self.flist_local_cen[idx])
         
-        ### info file contains: [0]kic, [1]tce, [2]period, [3]epoch, [4]duration, [5]label)
+        ### info file contains: [0]kic, [1]tce, [2]period, [3]epoch, [4]duration, [5]label; rest are stellar parameters)
         data_info = np.load(self.flist_info[idx])
         
         return (data_local, data_global, data_local_cen, data_global_cen, data_info[6:]), data_info[5]
@@ -162,7 +161,7 @@ class ExtranetModel(nn.Module):
 
         ### define fully connected layer that combines both views
         self.final_layer = nn.Sequential(
-            nn.Linear(16586, 512),
+            nn.Linear(16585, 512),
             nn.ReLU(),
             nn.Linear(512, 512),
             nn.ReLU(),
@@ -232,7 +231,7 @@ class ExtranetXSModel(nn.Module):
                 
         ### define fully connected layer that combines both views
         self.final_layer = nn.Sequential(
-            nn.Linear(58, 1),
+            nn.Linear(57, 1),
             nn.Sigmoid())
         
     ### define how to move forward through model
