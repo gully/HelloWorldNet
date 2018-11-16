@@ -73,7 +73,7 @@ class KeplerDataLoader(Dataset):
         ### list of global, local, and info files (assumes certain names of files)
         self.flist_global = np.sort(glob.glob(os.path.join(filepath, '*global.npy')))
         self.flist_local = np.sort(glob.glob(os.path.join(filepath, '*local.npy')))
-        self.flist_info = np.sort(glob.glob(os.path.join(filepath, '*info.npy')))
+        self.flist_info = np.sort(glob.glob(os.path.join(filepath, '*info3.npy')))
         
         ### list of whitened centroid files
         self.flist_global_cen = np.sort(glob.glob(os.path.join(filepath, '*global_cen_w.npy')))
