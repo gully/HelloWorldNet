@@ -10,6 +10,5 @@ The 2018 NASA FDL Exoplanet Team included:
 [Michele Sasdelli](https://uk.linkedin.com/in/michelesasdelli)
 
 There will soon also be a code for downloading the required *Kepler* light curves and generating the input views and labels. 
-For now, you can follow the instructions on the Astronet GitHub webpage to generate the light curve inputs, and then modify them accordingly to create the centroid inputs.
-The required info files with the stellar parameter inputs and labels can be found in the "input" directory in this repository.
-Alternatively, you can contact one of the FDL Exoplanet Team members for these files and any help setting up the code.
+For now, you can download the required input files from [this DropBox link](https://www.dropbox.com/sh/sxj7r30thd66nij/AACptMysLyaMhXe817e4z7Sya?dl=0) 
+(you must divide them into train, val, and test folders for the code to work).
