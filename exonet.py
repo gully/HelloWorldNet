@@ -73,7 +73,7 @@ class KeplerDataLoader(Dataset):
         ### list of global, local, and info files (assumes certain names of files)
         self.flist_global = np.sort(glob.glob(os.path.join(filepath, '*global.npy')))
         self.flist_local = np.sort(glob.glob(os.path.join(filepath, '*local.npy')))
-        self.flist_info = np.sort(glob.glob(os.path.join(filepath, '*info3.npy')))
+        self.flist_info = np.sort(glob.glob(os.path.join(filepath, '*info.npy')))
         
         ### list of whitened centroid files
         self.flist_global_cen = np.sort(glob.glob(os.path.join(filepath, '*global_cen_w.npy')))
@@ -99,7 +99,7 @@ class KeplerDataLoader(Dataset):
         ### info file contains: [0]kic, [1]tce, [2]period, [3]epoch, [4]duration, [5]label; rest are stellar parameters)
         data_info = np.load(self.flist_info[idx])
         
-        return (data_local, data_global, data_local_cen, data_global_cen, data_info[6:]), data_info[5]
+        return (data_local, data_global, data_local_cen, data_global_cen, data_info[6:12]), data_info[5]
 
 
 class ExtranetModel(nn.Module):
