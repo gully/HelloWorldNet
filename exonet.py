@@ -1,3 +1,4 @@
+
 ########################################
 ########### IMPORT PACKAGES ############
 ########################################
@@ -9,6 +10,7 @@ import glob as glob
 from tqdm import tqdm 
 from random import random
 import argparse
+import pandas as pd
 import pdb
 
 ### torch packages
@@ -36,15 +38,15 @@ import matplotlib.gridspec as gridspec
 ########################################
 
 ### an example input to command line:
-### python extranet.py 225 64 1e-5 '/data/kepler/new' '/data/ensembling/exonet_xs_ensembling'
+### python exonet.py 225 64 1e-5 '/data/kepler/new' '/data_sata1/ensembling/test'
 
 ### parse arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("n_epochs", help="number of epochs to use for training", type=int)
 parser.add_argument("n_batches", help="number of matches to use for training", type=int)
 parser.add_argument("r_learn", help="learning rate for Adam optimizer", type=float)
-parser.add_argument("d_path", help="path to data")
-parser.add_argument("m_out", help="path for output plot")
+parser.add_argument("d_path", help="path to data (should contain folders named val, test, train")
+parser.add_argument("m_out", help="path for output model, files, and plots")
 parser.add_argument("--fixed_seed", help="set if wanting to fix the seed", action="store_true")
 parser.add_argument("--XS", help="use ExtranetXS model", action="store_true")
 args = parser.parse_args()
@@ -96,10 +98,10 @@ class KeplerDataLoader(Dataset):
         data_global_cen = np.load(self.flist_global_cen[idx])
         data_local_cen = np.load(self.flist_local_cen[idx])
         
-        ### info file contains: [0]kic, [1]tce, [2]period, [3]epoch, [4]duration, [5]label; rest are stellar parameters)
+        ### info file contains: [0]kic, [1]tce, [2]period, [3]epoch, [4]duration, [5]label)
         data_info = np.load(self.flist_info[idx])
         
-        return (data_local, data_global, data_local_cen, data_global_cen, data_info[6:12]), data_info[5]
+        return (data_local, data_global, data_local_cen, data_global_cen, data_info[6:]), data_info[5]
 
 
 class ExtranetModel(nn.Module):
@@ -161,7 +163,7 @@ class ExtranetModel(nn.Module):
 
         ### define fully connected layer that combines both views
         self.final_layer = nn.Sequential(
-            nn.Linear(16585, 512),
+            nn.Linear(16586, 512),
             nn.ReLU(),
             nn.Linear(512, 512),
             nn.ReLU(),
@@ -231,7 +233,7 @@ class ExtranetXSModel(nn.Module):
                 
         ### define fully connected layer that combines both views
         self.final_layer = nn.Sequential(
-            nn.Linear(57, 1),
+            nn.Linear(58, 1),
             nn.Sigmoid())
         
     ### define how to move forward through model
@@ -279,7 +281,7 @@ def invert_tensor(tensor):
     return inverted_tensor
 
 
-def train_model(n_epochs, kepler_data_loader, model, criterion, optimizer):
+def train_model(n_epochs, kepler_data_loader, kepler_val_loader, model, criterion, optimizer):
 
     '''
 
@@ -428,8 +430,11 @@ if args.XS:
 else:
     model = ExtranetModel().cuda()
 
+### learning rate
+lr  = args.r_learn
+
 ### specify optimizer for learning to use for training
-optimizer = torch.optim.Adam(model.parameters(), lr=args.r_learn)
+optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
 ### specify loss function to use for training
 criterion = nn.BCELoss()
@@ -442,12 +447,12 @@ n_epochs = args.n_epochs
 
 ### grab data using data loader
 kepler_train_data = KeplerDataLoader(filepath=os.path.join(args.d_path, 'train'))
-kepler_val_data = KeplerDataLoader(filepath=os.path.join(args.d_path, 'val'))
+kepler_val_data = KeplerDataLoader(filepath=os.path.join(args.d_path, 'test'))
 kepler_data_loader = DataLoader(kepler_train_data, batch_size=batch_size, shuffle=True, num_workers=4)
 kepler_val_loader = DataLoader(kepler_val_data, batch_size=batch_size, shuffle=False, num_workers=4)
 
 ### train model
-loss_train_epoch, loss_val_epoch, acc_val_epoch, ap_val_epoch, pred_val_final, gt_val_final  = train_model(n_epochs, kepler_data_loader, model, criterion, optimizer)
+loss_train_epoch, loss_val_epoch, acc_val_epoch, ap_val_epoch, pred_val_final, gt_val_final  = train_model(n_epochs, kepler_data_loader, kepler_val_loader, model, criterion, optimizer)
 
 
 ########################################
@@ -489,33 +494,26 @@ for n, nval in enumerate(thresh):
 loss_train_batch = [x.item()* batch_size for x in loss_train_epoch]
 loss_val_batch = [x.item()* batch_size for x in loss_val_epoch]
 
-### setup
-from astropy.table import Table
+### setup output
 run = 0
 
 ### output predictions & ground truth
-pt_fname = 'r' + str(run).zfill(2) + '-i' + str(n_epochs) + '-pt.csv'
-while os.path.isfile(os.path.join(args.m_out, pt_fname)):
+pt_fname = os.path.join(args.m_out, 'r' + str(run).zfill(2) + '-i' + str(n_epochs) + '-lr' + str(lr) + '-pt.csv')
+while os.path.isfile(pt_fname):
     run +=1
-    pt_fname = 'r' + str(run).zfill(2) + '-i' + str(n_epochs) + '-pt.csv'
-t = Table()
-t['gt'] = gt_val_final
-t['pred'] = pred_val_final
-t.write(os.path.join(args.m_out, pt_fname), format='csv')
+    pt_fname = os.path.join(args.m_out, 'r' + str(run).zfill(2) + '-i' + str(n_epochs) + '-lr' + str(lr) + '-pt.csv')
+df = pd.DataFrame({"gt" : gt_val_final, "pred" : pred_val_final})
+df.to_csv(pt_fname, index=False)
 
 ### output per-iteration values
-epochs_fname = 'r' + str(run).zfill(2) + '-i' + str(n_epochs) + '-epoch.csv'
-t = Table()
-t['loss_train'] = loss_train_batch
-t['loss_val'] = loss_val_batch
-t['acc_val'] = acc_val_epoch
-t['ap_val'] = ap_val_epoch
-t.write(os.path.join(args.m_out, epochs_fname), format='csv')
+epochs_fname = os.path.join(args.m_out, 'r' + str(run).zfill(2) + '-i' + str(n_epochs) + '-lr' + str(lr) + '-epoch.csv')
+df = pd.DataFrame({"loss_train":loss_train_batch, "loss_val":loss_val_batch, "acc_val":acc_val_epoch, "ap_val":ap_val_epoch})
+df.to_csv(epochs_fname, index=False)
 
 ### save model
-model_fname = 'r' + str(run).zfill(2) + '-i' + str(n_epochs) + '-model.pth'
+model_fname = os.path.join(args.m_out, 'r' + str(run).zfill(2) + '-i' + str(n_epochs) + '-lr' + str(lr) + '-model.pth')
 torch.save(model.state_dict(), os.path.join(args.m_out, model_fname))
-print("\nOUTPUTTING MODEL @ " + os.path.join(args.m_out, model_fname) + "\n")
+print("\nOUTPUTTING MODEL + RESULTS @ " + os.path.join(args.m_out, model_fname) + "\n")
 
 
 ########################################
