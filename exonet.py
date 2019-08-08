@@ -512,7 +512,7 @@ df.to_csv(epochs_fname, index=False)
 
 ### save model
 model_fname = os.path.join(args.m_out, 'r' + str(run).zfill(2) + '-i' + str(n_epochs) + '-lr' + str(lr) + '-model.pth')
-torch.save(model.state_dict(), os.path.join(args.m_out, model_fname))
+torch.save(model.state_dict(), model_fname)
 print("\nOUTPUTTING MODEL + RESULTS @ " + os.path.join(args.m_out, model_fname) + "\n")
 
 
