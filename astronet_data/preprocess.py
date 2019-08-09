@@ -26,6 +26,7 @@ from light_curve_util import median_filter
 from light_curve_util import util
 from third_party.kepler_spline import kepler_spline
 
+import lightkurve as lk
 
 def read_and_process_light_curve(kepid, kepler_data_dir, campaign, max_gap_width=0.75):
   """Reads a light curve, fits a B-spline and divides the curve by the spline.
@@ -47,47 +48,13 @@ def read_and_process_light_curve(kepid, kepler_data_dir, campaign, max_gap_width
     ValueError: If the spline could not be fit.
   """
   # Read the Kepler light curve.
-  file_names = kepler_io.kepler_filenames(kepler_data_dir, kepid, campaign)
-  if not file_names:
-    raise IOError("Failed to find .idl file in %s for EPIC ID %s" %
-                  (kepler_data_dir, kepid))
+  lcf = lk.search_lightcurvefile(kepid, campaign=campaign).download()
 
-  all_time, all_flux = kepler_io.read_kepler_light_curve(file_names)
+  lcf.SAP_FLUX
 
-  # Split on gaps.
-  all_time, all_flux = util.split(all_time, all_flux, gap_width=max_gap_width)
+  #TODO: do some data cleaning/ data munging quality assurance here
 
-  # Logarithmically sample candidate break point spacings between 0.5 and 20
-  # days.
-  bkspaces = np.logspace(np.log10(0.5), np.log10(20), num=20)
-
-  # Generate spline.
-  spline = kepler_spline.choose_kepler_spline(
-      all_time, all_flux, bkspaces, penalty_coeff=1.0, verbose=False)[0]
-
-  if spline is None:
-    raise ValueError("Failed to fit spline with Kepler ID %s", kepid)
-
-  # Concatenate the piecewise light curve and spline.
-  time = np.concatenate(all_time)
-  flux = np.concatenate(all_flux)
-  spline = np.concatenate(spline)
-
-  # In rare cases the piecewise spline contains NaNs in places the spline could
-  # not be fit. We can't normalize those points if the spline isn't defined
-  # there. Instead we just remove them.
-  finite_i = np.isfinite(spline)
-  if not np.all(finite_i):
-    tf.logging.warn("Incomplete spline with Kepler ID %s", kepid)
-    time = time[finite_i]
-    flux = flux[finite_i]
-    spline = spline[finite_i]
-
-  # "Flatten" the light curve (remove low-frequency variability) by dividing by
-  # the spline.
-  flux /= spline
-
-  return time, flux
+  return lcf.SAP_FLUX.time, lcf.SAP_FLUX.flux
 
 
 def phase_fold_and_sort_light_curve(time, flux, period, t0):
