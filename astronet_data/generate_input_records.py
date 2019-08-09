@@ -84,7 +84,8 @@ import sys
 
 import numpy as np
 import pandas as pd
-import tensorflow as tf
+#import tensorflow as tf
+import torch
 
 from astronet.data import preprocess
 
