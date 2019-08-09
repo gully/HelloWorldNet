@@ -11,6 +11,11 @@ This work is a direct result of the [2019 PyTorch Summer Hackathon](https://info
 - [Grant](https://github.com/GrantRVD) ([twitter](https://twitter.com/usethespacebar))
 - [Humayun](https://github.com/humayun)
 
+Our goal is to apply PyTorch to improve the speed and reliability of detecting exoplanets in [lightcurve](https://imagine.gsfc.nasa.gov/features/yba/M31_velocity/lightcurve/lightcurve_more.html) data. Specifically, we're attempting to
+
+- extend Exonet and Astronet for better precision and recall
+- creating dataloaders for various data sources, such as Kepler, TESS, and K2
+- exploring model architectures to improve transfer learning between exoplanet monitoring and detection tasks
 
 ### Performance Benchmark
 
@@ -20,13 +25,7 @@ This work is a direct result of the [2019 PyTorch Summer Hackathon](https://info
 |Exonet (PyTorch) Replication| 0.969|
 |**HelloWorldNet (PyTorch Hackathon)**| **0.977**|
 
-
-Our goal is to apply PyTorch to improve the speed and reliability of detecting exoplanets in [lightcurve](https://imagine.gsfc.nasa.gov/features/yba/M31_velocity/lightcurve/lightcurve_more.html) data. Specifically, we're attempting to
-
-- extend Exonet and Astronet for better precision and recall
-- creating dataloaders for various data sources, such as Kepler, TESS, and K2
-- exploring model architectures to improve transfer learning between exoplanet monitoring and detection tasks
-
+![Training Curves for HelloWorldNet](./graphs/Training.png)
 
 ### Finding planets is a needle in a haystack problem
 
