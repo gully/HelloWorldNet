@@ -31,3 +31,9 @@ Our goal is to apply PyTorch to improve the speed and reliability of detecting e
 ### Finding planets is a needle in a haystack problem
 
 ![The problem](https://keplerscience.arc.nasa.gov/images/shareable_-_kepler_-_numbers_12may2015-2_1041sq.jpeg)
+
+
+### Neural networks can distinguish rare exoplanets from spurious astrophysical signals
+
+
+![PyTorch Helps](graphs/gaiaDR2_neural_network.png)
