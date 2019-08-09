@@ -23,7 +23,7 @@ Our goal is to apply PyTorch to improve the speed and reliability of detecting e
 | --  | -- |
 |Astronet (TensorFlow) | 0.955|
 |Exonet (PyTorch) Replication| 0.969|
-|Exonet (PyTorch) Reported (Ansdell et al. (2018))| 0.980
+|Exonet (PyTorch) Reported (Ansdell et al. (2018))| 0.980 |
 |**HelloWorldNet (PyTorch Hackathon)**| **0.977**|
 
 ![Training Curves for HelloWorldNet](./graphs/Training.png)
@@ -35,5 +35,11 @@ Our goal is to apply PyTorch to improve the speed and reliability of detecting e
 
 ### Neural networks can distinguish rare exoplanets from spurious astrophysical signals
 
+We used data from the Gaia Mission Data Release 2 to improve our knowledge of the stars, making the model more accurate and precise.
 
 ![PyTorch Helps](graphs/gaiaDR2_neural_network.png)
+
+
+### Training Performance
+
+![how we did](graphs/pytorch_hackathon_performance.png)
