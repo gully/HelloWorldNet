@@ -57,7 +57,7 @@ def read_and_process_light_curve(kepid, kepler_data_dir, campaign, max_gap_width
   return lcf.SAP_FLUX.time, lcf.SAP_FLUX.flux
 
 
-def phase_fold_and_sort_light_curve(time, flux, period, t0):
+def phase_fold_and_sort_light_curve(lc, period, t0):
   """Phase folds a light curve and sorts by ascending time.
 
   Args:
@@ -74,14 +74,9 @@ def phase_fold_and_sort_light_curve(time, flux, period, t0):
         array, but sorted by folded_time.
   """
   # Phase fold time.
-  time = util.phase_fold_time(time, period, t0)
+  folded_lc = lc.fold(period, t0=t0)
 
-  # Sort by ascending time.
-  sorted_i = np.argsort(time)
-  time = time[sorted_i]
-  flux = flux[sorted_i]
-
-  return time, flux
+  return folded_lc.time, folded_lc.flux
 
 
 def generate_view(time, flux, num_bins, bin_width, t_min, t_max,
