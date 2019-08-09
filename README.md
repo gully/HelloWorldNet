@@ -7,11 +7,15 @@ HelloWorldnet is a modified version of [Exonet](https://gitlab.com/frontierdevel
 This work is a direct result of the [2019 PyTorch Summer Hackathon](https://info.devpost.com/pytorchmpkrules), hosted at Facebook HQ, with team members:
 
 - [Gully](https://github.com/gully)
-- [Grant](https://github.com/GrantRVD)
+- [Grant](https://github.com/GrantRVD) ([twitter](https://twitter.com/usethespacebar))
 - [Humayun](https://github.com/humayun)
 
 
-Our goal is to explore the accuracy and extensibility of Exonet to improve the discovery of extra-solar planets.
+Our goal is to apply PyTorch to improve the speed and reliability of detecting exoplanets in [lightcurve](https://imagine.gsfc.nasa.gov/features/yba/M31_velocity/lightcurve/lightcurve_more.html) data. Specifically, we're attempting to
+
+- extend Exonet and Astronet for better precision and recall
+- creating dataloaders for various data sources, such as Kepler, TESS, and K2
+- exploring model architectures to improve transfer learning between exoplanet monitoring and detection tasks
 
 
 #### Original README for [ExonetNet-PyTorch](https://gitlab.com/frontierdevelopmentlab/exoplanets/exonet-pytorch):

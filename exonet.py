@@ -45,6 +45,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("n_epochs", help="number of epochs to use for training", type=int)
 parser.add_argument("n_batches", help="number of matches to use for training", type=int)
 parser.add_argument("r_learn", help="learning rate for Adam optimizer", type=float)
+parser.add_argument("d_rate", help="Dropout rate to use during training", type=float)
 parser.add_argument("d_path", help="path to data (should contain folders named val, test, train")
 parser.add_argument("m_out", help="path for output model, files, and plots")
 parser.add_argument("--fixed_seed", help="set if wanting to fix the seed", action="store_true")
@@ -114,10 +115,11 @@ class ExtranetModel(nn.Module):
     
     '''
     
-    def __init__(self):
+    def __init__(self, d_rate):
 
         ### initialize model
         super(ExtranetModel, self).__init__()
+        droplayer = nn.Dropout(d_rate) if d_rate > 1e-3 else nn.Dropout(0.)
 
         ### define global convolutional lalyer
         self.fc_global = nn.Sequential(
@@ -137,6 +139,7 @@ class ExtranetModel(nn.Module):
             nn.ReLU(),
             nn.MaxPool1d(5, stride=2),
             nn.Conv1d(64, 128, 5, stride=1, padding=2),
+            droplayer,
             nn.ReLU(),
             nn.Conv1d(128, 128, 5, stride=1, padding=2),
             nn.MaxPool1d(5, stride=2),
@@ -428,7 +431,9 @@ print("\nTRAINING MODEL...\n")
 if args.XS:
     model = ExtranetXSModel().cuda()
 else:
-    model = ExtranetModel().cuda()
+    ### dropout rate for training
+    d_rate = args.d_rate
+    model = ExtranetModel(d_rate).cuda()
 
 ### learning rate
 lr  = args.r_learn
@@ -511,7 +516,7 @@ df = pd.DataFrame({"loss_train":loss_train_batch, "loss_val":loss_val_batch, "ac
 df.to_csv(epochs_fname, index=False)
 
 ### save model
-model_fname = os.path.join(args.m_out, 'r' + str(run).zfill(2) + '-i' + str(n_epochs) + '-lr' + str(lr) + '-model.pth')
+model_fname = os.path.join(args.m_out, 'r' + str(run).zfill(2) + '-i' + str(n_epochs) + '-lr' + str(lr) + '-drop' + str(d_rate) + '-model.pth')
 torch.save(model.state_dict(), model_fname)
 print("\nOUTPUTTING MODEL + RESULTS @ " + os.path.join(args.m_out, model_fname) + "\n")
 
