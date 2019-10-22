@@ -32,6 +32,7 @@ dependencies:
   - graphviz
   - ghp-import
   - pylint
+  - celerite
   - flake8
   - autopep8
   - pep8
@@ -42,6 +43,7 @@ dependencies:
   - pip
   - pip:
     - twisted
+    - emcee
     - mkl-random
     - fbpca
     - astroml
