@@ -3,6 +3,7 @@ import pandas as pd
 import lightkurve as lk
 from patsy import dmatrix
 from tqdm import tqdm
+import celerite
 #import logging
 
 def get_spline_dm(x, n_knots=20, degree=3, name='spline',
@@ -66,7 +67,8 @@ def spline_model_comparison_BIC(lc, cadence_mask=None):
     model_fits = {}
     for i, n_knots in enumerate(all_n_knots):
         dm = get_spline_dm(lc.time, n_knots=n_knots).append_constant()
-        _ = regc.correct(dm, sigma=3, niters=5)
+        # It's possible this will fail if too many cadences are masked...
+        _ = regc.correct(dm, sigma=3, niters=5, cadence_mask=cadence_mask)
         model_flux = np.dot(dm.values, regc.coefficients)
         model_fits[i] = model_flux
         n_params = n_knots+3-1
