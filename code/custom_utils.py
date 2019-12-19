@@ -4,6 +4,8 @@ import lightkurve as lk
 from patsy import dmatrix
 from tqdm import tqdm
 import celerite
+from scipy.optimize import minimize
+import astropy.units as u
 #import logging
 
 def get_spline_dm(x, n_knots=20, degree=3, name='spline',
@@ -91,3 +93,84 @@ def make_cadence_mask(lc_raw, this_kepid_df):
         this_mask = np.in1d(lc_raw.time, this_fold.time_original[phase_mask])
         tce_mask = tce_mask | this_mask
     return tce_mask
+
+
+def neg_log_like(params, y, gp):
+    gp.set_parameter_vector(params)
+    return -gp.log_likelihood(y)
+
+def grad_neg_log_like(params, y, gp):
+    gp.set_parameter_vector(params)
+    return -gp.grad_log_likelihood(y)[1]
+
+
+def estimate_gp_mean_model(lc, t=None):
+    """return a MAP GP mean model for input lightcurve"""
+    pg = lc.normalize(unit='unscaled').to_periodogram(normalization='psd', freq_unit=1/u.day)
+    guess_period = pg.period_at_max_power.to(u.day).value
+    variance = np.var(lc.flux)
+
+    Q_guess = 15.0
+    w0_guess = 2.0*np.pi / guess_period
+    S0_guess = variance /10
+    bounds1 = dict(log_S0=(np.log(variance/1000), np.log(variance*1000)),
+               log_Q=(np.log(3), np.log(200)),
+               log_omega0=(np.log(w0_guess*0.8),np.log(w0_guess*1.2)))
+
+    kernel_sho = celerite.terms.SHOTerm(log_S0=np.log(S0_guess), log_Q=np.log(Q_guess),
+                       log_omega0=np.log(w0_guess), bounds=bounds1)
+
+    net_kernel = kernel_sho
+    gp = celerite.GP(net_kernel, fit_mean=False, mean=lc.flux.mean())
+    gp.compute(lc.time, yerr=lc.flux_err)
+
+    initial_params = gp.get_parameter_vector()
+
+    bounds = gp.get_parameter_bounds()
+    soln = minimize(neg_log_like, initial_params, jac=grad_neg_log_like,
+                    method="L-BFGS-B", bounds=bounds, args=(lc.flux, gp))
+    gp.set_parameter_vector(soln.x)
+    out = gp.predict(lc.flux, return_cov=False)
+    if t is not None:
+        out = gp.predict(lc.flux, t=t, return_cov=False)
+    return out
+
+def batch_flatten_collection(lcs, kepid_df, method='GP', return_trend=False):
+    """Batch flatten a LightCurveCollection, grouping by quarter
+
+    Parameters:
+    -----------
+    lcs: LightCurveCollection
+        A collection of lightcurves for a single planet host star system
+
+    kepid_df: pandas DataFrame
+        A pandas DataFrame containing the periods and t0 of each TCE in the
+        system.  Uses the same column names as the DR24 catalog
+
+    method: string
+        Either "GP" or "spline"
+
+    return_trend: boolean
+        Whether or not to return the inferred trend.  Default: False
+    """
+    # Flatten all the quarters first using splines
+    lcs_flattened = lk.LightCurveCollection([])
+    lcs_trends = lk.LightCurveCollection([])
+    for lc_per_quarter in lcs:
+        lc_per_quarter = lc_per_quarter.remove_nans()
+        tce_mask = make_cadence_mask(lc_per_quarter, kepid_df)
+        if method=='GP':
+            input_lc = lc_per_quarter[~tce_mask].remove_outliers()
+            trend = estimate_gp_mean_model(input_lc, t=lc_per_quarter.time)
+        if method=='spline':
+            trend, knot_spacing = spline_model_comparison_BIC(lc_per_quarter, ~tce_mask)
+
+        flattened = lc_per_quarter / trend
+        lcs_flattened.append(flattened)
+        lc_trend = lc_per_quarter.copy()
+        lc_trend.flux = trend
+        lcs_trends.append(lc_trend)
+    if return_trend:
+        return lcs_flattened, lcs_trends
+    else:
+        return lcs_flattened
